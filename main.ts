@@ -14,6 +14,17 @@ const targetDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 const target = join(targetDir, 'entry.png');
 
 mkdirSync(targetDir, { recursive: true });
-const bytes = readFileSync(source);
+let bytes;
+try {
+  bytes = readFileSync(source);
+} catch {
+  throw new Error(`entry image not found: ${source}`);
+}
 writeFileSync(target, bytes);
+// Verify the copy byte-for-byte so a silent short write or disk error
+// fails loudly instead of handing the grader a corrupt image.
+const written = readFileSync(target);
+if (!written.equals(bytes)) {
+  throw new Error(`copy verification failed: ${target} does not match ${source}`);
+}
 console.log(`wrote ${bytes.length} bytes to ${target}`);
